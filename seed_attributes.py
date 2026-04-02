@@ -1,8 +1,11 @@
 import requests
 import psycopg2
 import time
+import os
+from dotenv import load_dotenv
 
-API_KEY = "e0f9566ddf3eef5ecdb5c3d5828380eb"
+load_dotenv()
+API_KEY = os.getenv("DUKE_API_KEY")
 BASE_URL = "https://streamer.oit.duke.edu/curriculum"
 
 conn = psycopg2.connect(dbname="duke_courses", user="uzair_chaudhry", host="localhost")
