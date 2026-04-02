@@ -2,6 +2,23 @@ import { useState, useEffect } from 'react'
 
 const API = 'http://127.0.0.1:5001'
 
+const AOK_LABELS = {
+  'ALP': 'Arts, Literature & Performance',
+  'CZ': 'Civilizations',
+  'NS': 'Natural Sciences',
+  'QS': 'Quantitative Studies',
+  'SS': 'Social Sciences'
+}
+
+const MOI_LABELS = {
+  'CCI': 'Cross-Cultural Inquiry',
+  'EI': 'Ethical Inquiry',
+  'FL': 'Foreign Language',
+  'R': 'Research',
+  'STS': 'Science, Technology & Society',
+  'W': 'Writing'
+}
+
 export default function App() {
   const [subjects, setSubjects] = useState([])
   const [courses, setCourses] = useState([])
@@ -10,10 +27,17 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [aok, setAok] = useState('')
+  const [moi, setMoi] = useState([])
+  const [aokOptions, setAokOptions] = useState([])
+  const [moiOptions, setMoiOptions] = useState([])
 
   useEffect(() => {
     fetch(`${API}/api/subjects`).then(r => r.json()).then(setSubjects)
+    fetch(`${API}/api/aok`).then(r => r.json()).then(setAokOptions)
+    fetch(`${API}/api/moi`).then(r => r.json()).then(setMoiOptions)
   }, [])
+    
 
   const fetchCourses = () => {
     setLoading(true)
@@ -22,6 +46,8 @@ export default function App() {
     if (subject) params.append('subject', subject)
     if (level) params.append('level', level)
     if (search) params.append('search', search)
+    if (aok) params.append('aok', aok)
+    moi.forEach(m => params.append('moi', m))
     fetch(`${API}/api/courses?${params}`)
       .then(r => r.json())
       .then(data => { setCourses(data); setLoading(false) })
@@ -251,6 +277,41 @@ export default function App() {
               <option value="500">500-level</option>
             </select>
           </div>
+
+          <div className="filter-group">
+            <span className="filter-label">Area of Knowledge</span>
+            <select value={aok} onChange={e => setAok(e.target.value)}>
+              <option value="">All Areas</option>
+              {aokOptions.map(a => <option key={a} value={a}>{AOK_LABELS[a] || a}</option>)}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <span className="filter-label">Mode of Inquiry</span>
+            <div style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%'}}>
+              {moiOptions.map(m => (
+                <label key={m} style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  background: moi.includes(m) ? '#eef1fa' : '#fafaf8',
+                  border: `1.5px solid ${moi.includes(m) ? '#00247d' : '#e0dbd0'}`,
+                  borderRadius: 6, padding: '5px 10px', cursor: 'pointer',
+                  fontSize: 13, color: moi.includes(m) ? '#00247d' : '#1a1a2e'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={moi.includes(m)}
+                    onChange={e => {
+                      if (e.target.checked) setMoi([...moi, m])
+                      else setMoi(moi.filter(x => x !== m))
+                    }}
+                    style={{display: 'none'}}
+                  />
+                  {MOI_LABELS[m] || m}
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div className="filter-group">
             <span className="filter-label">Keyword</span>
             <input className="search" placeholder="e.g. machine learning, ethics..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={handleKey} />

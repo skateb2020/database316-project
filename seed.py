@@ -56,16 +56,17 @@ course_ids_inserted = set()
 subjects = get_subjects()
 print(f"Found {len(subjects)} subjects, processing first 20...")
 
-KEY_SUBJECTS = ["COMPSCI", "MATH", "PHYSICS", "ECON", "PHIL", "STA", "BIOLOGY", "ENGLISH", "HISTORY", "SPANISH"]
+subjects = get_subjects()
+print(f"Found {len(subjects)} subjects, processing all...")
 
-for subject in KEY_SUBJECTS:
+for subject in subjects:
     print(f"Processing {subject}...")
     courses = get_courses(subject)
     for course in courses:
         crse_id = int(course.get("crse_id", 0))
         if not crse_id:
             continue
-        cname = course.get("course_title_long", "")[:100]
+        cname = (course.get("course_title_long") or "")[:100]
         numbering_raw = course.get("catalog_nbr", "").strip()
         try:
             numbering = int(''.join(filter(str.isdigit, numbering_raw)))
