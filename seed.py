@@ -1,9 +1,12 @@
 import requests
 import psycopg2
 import json
+import os
 from datetime import datetime
+from dotenv import load_dotenv
 
-API_KEY = "e0f9566ddf3eef5ecdb5c3d5828380eb"
+load_dotenv()
+API_KEY = os.getenv("DUKE_API_KEY")
 BASE_URL = "https://streamer.oit.duke.edu/curriculum"
 STRM = "1950"
 
