@@ -2,6 +2,7 @@
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
+import 'dotenv/config';
 
 const app = express();
 app.use(cors());
@@ -12,10 +13,10 @@ const BASE_URL = process.env.BASE_URL;
 const modelName = 'GPT 4.1 Nano'
 
 app.post("/api/openai", async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, systemPrompt } = req.body;
 
   try {
-    const response = await fetch(BASE_URL, {
+    const response = await fetch(`${process.env.BASE_URL}/v1/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -23,7 +24,8 @@ app.post("/api/openai", async (req, res) => {
       },
       body: JSON.stringify({
         model: modelName,
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: 'system', content: systemPrompt ?? 'You are an academic advisor for Duke Univerisity. Answer the question in the most helpful and accurate way or respond that you do not know the answer.' },
+        { role: 'user', content: prompt }],
       }),
     });
 

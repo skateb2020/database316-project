@@ -16,7 +16,7 @@ def filter_courses():
     aok = request.args.get("aok")
     moi = request.args.getlist("moi")
 
-    query = "SELECT DISTINCT c.course_id, c.cname, c.numbering, c.subject FROM Course c WHERE 1=1"
+    query = "SELECT DISTINCT ON (c.subject, c.numbering) c.course_id, c.cname, c.numbering, c.subject FROM Course c WHERE 1=1"
     sql_params = []
 
     if subject:
@@ -79,6 +79,32 @@ def get_moi():
     cur.close()
     conn.close()
     return jsonify([r[0] for r in rows])
+
+@app.route('/api/courses/<int:course_id>')
+def get_course(course_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT c.course_id, c.cname, c.numbering, c.subject,
+               array_agg(DISTINCT a.area) as aok,
+               array_agg(DISTINCT m.mode) as moi
+        FROM Course c
+        LEFT JOIN Areas_Of_Knowledge a ON c.course_id = a.course_id
+        LEFT JOIN Modes_Of_Inquiry m ON c.course_id = m.course_id
+        WHERE c.course_id = %s
+        GROUP BY c.course_id, c.cname, c.numbering, c.subject
+    """, (course_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return jsonify({
+        "course_id": row[0],
+        "name": row[1],
+        "number": row[2],
+        "subject": row[3],
+        "aok": row[4],
+        "moi": row[5]
+    })
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
