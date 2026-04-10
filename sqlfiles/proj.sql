@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict J04dAKSFEhv41t1JkadHlbnr0Iu8vHmlw1IuAAr9v9URlTYGEsHWeypMMVgVMP2
+--\restrict J04dAKSFEhv41t1JkadHlbnr0Iu8vHmlw1IuAAr9v9URlTYGEsHWeypMMVgVMP2
 
 -- Dumped from database version 16.11 (Debian 16.11-1.pgdg13+1)
 -- Dumped by pg_dump version 16.11 (Debian 16.11-1.pgdg13+1)
@@ -12,7 +12,8 @@ SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
+--SELECT pg_catalog.set_config('search_path', '', false);
+SET search_path TO public, pg_catalog; --added this
 SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
@@ -29,7 +30,7 @@ CREATE TABLE Course(
     course_id integer NOT NULL PRIMARY KEY,
     cname character varying(100),
     numbering integer,
-    cdescription NVARCHAR(MAX),
+    cdescription TEXT,
     is_graded BOOLEAN,
     is_discussion BOOLEAN,
     is_lecture BOOLEAN
@@ -43,7 +44,7 @@ CREATE TABLE Offering(
     offering_id integer NOT NULL PRIMARY KEY,
     course_id integer NOT NULL REFERENCES Course(course_id),
     semester character varying(100),
-    phys_location NVARCHAR(MAX)
+    phys_location TEXT
 
 );
 
@@ -95,7 +96,7 @@ CREATE TABLE Areas_Of_Knowledge(
 
 --------------------------------ALTER TABLE/CREATE SEQUENCE INFO-------------------------------------
 
-ALTER TABLE Program OWNER TO abbyr;
+-- ALTER TABLE Program OWNER TO skateb2020;
 
 --
 -- Name: program_program_id_seq; Type: SEQUENCE; Schema: public; Owner: abbyr
@@ -110,7 +111,7 @@ CREATE SEQUENCE Program_program_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE Program_program_id_seq OWNER TO abbyr;
+-- ALTER SEQUENCE Program_program_id_seq OWNER TO skateb2020;
 
 --
 -- Name: program_program_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: abbyr
@@ -130,13 +131,13 @@ CREATE TABLE Program_requirements (
 );
 
 
-ALTER TABLE Program_requirements OWNER TO abbyr;
+-- ALTER TABLE Program_requirements OWNER TO skateb2020;
 
 --
 -- Name: program program_id; Type: DEFAULT; Schema: public; Owner: abbyr
 --
 
-ALTER TABLE ONLY Program ALTER COLUMN program_id SET DEFAULT nextval('Program_program_id_seq'::regclass);
+-- ALTER TABLE ONLY Program ALTER COLUMN program_id SET DEFAULT nextval('Program_program_id_seq'::regclass);
 
 
 
@@ -305,7 +306,6 @@ COPY Program (program_id, pname, ptype, degree_type, school, valid_from_yr, vali
 156	Science & the Public	certificate	\N	Trinity	\N	\N
 \.
 
-
 --
 -- Data for Name: program_requirements; Type: TABLE DATA; Schema: public; Owner: abbyr
 --
@@ -325,29 +325,29 @@ SELECT pg_catalog.setval('Program_program_id_seq', 156, true);
 -- Name: program program_pkey; Type: CONSTRAINT; Schema: public; Owner: abbyr
 --
 
-ALTER TABLE ONLY Program
-    ADD CONSTRAINT program_pkey PRIMARY KEY (program_id);
+-- ALTER TABLE ONLY Program
+--     ADD CONSTRAINT program_pkey PRIMARY KEY (program_id);
 
 
 --
 -- Name: program_requirements program_requirements_pkey; Type: CONSTRAINT; Schema: public; Owner: abbyr
 --
 
-ALTER TABLE ONLY Program_requirements
-    ADD CONSTRAINT program_requirements_pkey PRIMARY KEY (program_id, course_id);
+-- ALTER TABLE ONLY Program_requirements
+--     ADD CONSTRAINT program_requirements_pkey PRIMARY KEY (program_id, course_id);
 
 
 --
 -- Name: program_requirements program_requirements_program_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: abbyr
 --
 
-ALTER TABLE ONLY Program_requirements
-    ADD CONSTRAINT program_requirements_program_id_fkey FOREIGN KEY (program_id) REFERENCES Program(program_id);
+-- ALTER TABLE ONLY Program_requirements
+--     ADD CONSTRAINT program_requirements_program_id_fkey FOREIGN KEY (program_id) REFERENCES Program(program_id);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict J04dAKSFEhv41t1JkadHlbnr0Iu8vHmlw1IuAAr9v9URlTYGEsHWeypMMVgVMP2
+-- \unrestrict J04dAKSFEhv41t1JkadHlbnr0Iu8vHmlw1IuAAr9v9URlTYGEsHWeypMMVgVMP2
 
