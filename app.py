@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)
 
 def get_db():
-    return psycopg2.connect(dbname="duke_courses", user="uzair_chaudhry", host="localhost")
+    return psycopg2.connect(dbname="duke_courses", user="postgres", host="localhost", password="hWznS2an%")
 
 @app.route("/api/courses", methods=["GET"])
 def filter_courses():
@@ -16,11 +16,11 @@ def filter_courses():
     aok = request.args.get("aok")
     moi = request.args.getlist("moi")
 
-    query = "SELECT DISTINCT c.course_id, c.cname, c.numbering, c.subject FROM Course c WHERE 1=1"
+    query = "SELECT DISTINCT c.course_id, c.cname, c.numbering, c.cdescription FROM Course c WHERE 1=1"
     sql_params = []
 
     if subject:
-        query += " AND c.subject = %s"
+        query += " AND c.cdescription = %s"
         sql_params.append(subject)
     if level:
         level = int(level)
@@ -38,7 +38,7 @@ def filter_courses():
             query += " AND c.course_id IN (SELECT course_id FROM Modes_Of_Inquiry WHERE mode = %s)"
             sql_params.append(m)
 
-    query += " ORDER BY c.subject, c.numbering LIMIT 50"
+    query += " ORDER BY c.cdescription, c.numbering LIMIT 50"
 
     conn = get_db()
     cur = conn.cursor()
@@ -54,7 +54,7 @@ def filter_courses():
 def get_subjects():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT DISTINCT subject FROM Course ORDER BY subject")
+    cur.execute("SELECT DISTINCT cdescription FROM Course ORDER BY cdescription")
     rows = cur.fetchall()
     cur.close()
     conn.close()

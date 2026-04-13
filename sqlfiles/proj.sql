@@ -1,9 +1,6 @@
-﻿--
+--
 -- PostgreSQL database dump
 --
-
-\restrict J04dAKSFEhv41t1JkadHlbnr0Iu8vHmlw1IuAAr9v9URlTYGEsHWeypMMVgVMP2
-
 -- Dumped from database version 16.11 (Debian 16.11-1.pgdg13+1)
 -- Dumped by pg_dump version 16.11 (Debian 16.11-1.pgdg13+1)
 
@@ -12,7 +9,7 @@ SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
+SELECT pg_catalog.set_config('search_path', 'public', false);
 SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
@@ -29,7 +26,7 @@ CREATE TABLE Course(
     course_id integer NOT NULL PRIMARY KEY,
     cname character varying(100),
     numbering integer,
-    cdescription NVARCHAR(MAX),
+    cdescription TEXT,
     is_graded BOOLEAN,
     is_discussion BOOLEAN,
     is_lecture BOOLEAN
@@ -43,7 +40,7 @@ CREATE TABLE Offering(
     offering_id integer NOT NULL PRIMARY KEY,
     course_id integer NOT NULL REFERENCES Course(course_id),
     semester character varying(100),
-    phys_location NVARCHAR(MAX)
+    phys_location TEXT
 
 );
 
@@ -95,7 +92,7 @@ CREATE TABLE Areas_Of_Knowledge(
 
 --------------------------------ALTER TABLE/CREATE SEQUENCE INFO-------------------------------------
 
-ALTER TABLE Program OWNER TO abbyr;
+ALTER TABLE Program OWNER TO postgres;
 
 --
 -- Name: program_program_id_seq; Type: SEQUENCE; Schema: public; Owner: abbyr
@@ -110,7 +107,7 @@ CREATE SEQUENCE Program_program_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE Program_program_id_seq OWNER TO abbyr;
+ALTER SEQUENCE Program_program_id_seq OWNER TO postgres;
 
 --
 -- Name: program_program_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: abbyr
@@ -130,7 +127,7 @@ CREATE TABLE Program_requirements (
 );
 
 
-ALTER TABLE Program_requirements OWNER TO abbyr;
+ALTER TABLE Program_requirements OWNER TO postgres;
 
 --
 -- Name: program program_id; Type: DEFAULT; Schema: public; Owner: abbyr
@@ -325,8 +322,8 @@ SELECT pg_catalog.setval('Program_program_id_seq', 156, true);
 -- Name: program program_pkey; Type: CONSTRAINT; Schema: public; Owner: abbyr
 --
 
-ALTER TABLE ONLY Program
-    ADD CONSTRAINT program_pkey PRIMARY KEY (program_id);
+--ALTER TABLE ONLY Program
+    --ADD CONSTRAINT program_pkey PRIMARY KEY (program_id);
 
 
 --
@@ -348,6 +345,3 @@ ALTER TABLE ONLY Program_requirements
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict J04dAKSFEhv41t1JkadHlbnr0Iu8vHmlw1IuAAr9v9URlTYGEsHWeypMMVgVMP2
-

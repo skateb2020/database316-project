@@ -10,7 +10,7 @@ API_KEY = os.getenv("DUKE_API_KEY")
 BASE_URL = "https://streamer.oit.duke.edu/curriculum"
 STRM = "1950"
 
-conn = psycopg2.connect(dbname="duke_courses", user="uzair_chaudhry", host="localhost")
+conn = psycopg2.connect(dbname="duke_courses", user="postgres", host="localhost", password="hWznS2an%")
 cur = conn.cursor()
 
 def get_subjects():
@@ -76,7 +76,7 @@ for subject in subjects:
         except:
             numbering = None
         cur.execute("""
-            INSERT INTO Course(course_id, cname, numbering, subject, is_graded, is_lecture, is_discussion)
+            INSERT INTO Course(course_id, cname, numbering, cdescription, is_graded, is_lecture, is_discussion)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT DO NOTHING
         """, (crse_id, cname, numbering, subject, True, True, False))
