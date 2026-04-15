@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)
 
 def get_db():
-    return psycopg2.connect(dbname="duke_courses", user="uzair_chaudhry", host="localhost")
+    return psycopg2.connect(dbname="duke_courses", user="postgres", password="Itz_4_T4K3D0wN", host="localhost")
 
 @app.route("/api/courses", methods=["GET"])
 def filter_courses():
