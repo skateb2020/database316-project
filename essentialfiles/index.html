@@ -2,12 +2,75 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+      <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>cs316-final-project</title>
-  </head>
-  <body>
+
+</head>
+<body>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+  <button class="toggle-btn" id="chatbot-tab">Duke Course Bot \|°ᴗ°|/</button>
+
+  <div class="panel" id="chatbot-panel">
+    <h3>Hi, I'm the Duke Course Chatbot</h3>
+    <p>Ask me anything about Duke courses!</p>
+    <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <iframe src=""></iframe>
+  </div>
+
+<script>
+    const btn = document.getElementById('chatbot-tab');
+    const panel = document.getElementById('chatbot-panel');
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+
+    btn.addEventListener('click', () => {
+        // Get the computed style of the panel
+        const isVisible = window.getComputedStyle(panel).display === 'block';
+
+        if (isVisible) {
+            panel.style.display = 'none';
+            btn.textContent = 'Duke Course Bot \\|°ᴗ°|/';
+        } else {
+            panel.style.display = 'block';
+            btn.textContent = 'Close Duke Course Bot';
+        }
+    });
+
+    function appendMessage(text, sender) {
+        const message = document.createElement('div');
+        message.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+        message.textContent = text;
+        chatMessages.appendChild(message);
+        chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+    }
+
+    function sendMessage() {
+        const text = userInput.value.trim();
+        if (text === '') return;
+
+        appendMessage(text, 'user');
+        userInput.value = '';
+
+        setTimeout(() => {
+            appendMessage("You said: " + text, 'bot');
+        }, 500);
+    }
+
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+</script>
+</body>
 </html>
