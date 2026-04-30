@@ -8,7 +8,7 @@ load_dotenv()
 API_KEY = os.getenv("DUKE_API_KEY")
 BASE_URL = "https://streamer.oit.duke.edu/curriculum"
 
-conn = psycopg2.connect(dbname="duke_courses", user="uzair_chaudhry", host="localhost")
+conn = psycopg2.connect(dbname="duke_courses", user="skateb2020", password="WhitevilleDurham", host="localhost")
 cur = conn.cursor()
 
 # Get all courses from DB
