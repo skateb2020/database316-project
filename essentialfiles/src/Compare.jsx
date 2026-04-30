@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const API = 'http://127.0.0.1:5001'
 
 export default function Compare() {
   const [subjects, setSubjects] = useState([])
-
+  const navigate = useNavigate()
   const [search1, setSearch1] = useState('')
   const [search2, setSearch2] = useState('')
   const [results1, setResults1] = useState([])
@@ -69,10 +70,54 @@ export default function Compare() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #f5f3ee; font-family: 'DM Sans', sans-serif; color: #1a1a2e; min-height: 100vh; }
 
-        .hero { background: #00247d; padding: 48px 40px 40px; }
-        .hero-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: #c4a000; margin-bottom: 10px; }
-        .hero h1 { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #fff; margin-bottom: 8px; }
-        .hero-sub { color: rgba(255,255,255,0.6); font-size: 15px; font-weight: 300; }
+        .hero {
+          background: #00247d;
+          padding: 48px 40px 40px;
+          position: relative;
+          overflow: hidden;
+          width: 100%;
+        }
+        .hero-inner {
+          max-width: 1100px;
+          margin: 0 auto;
+        }
+        .hero::before {
+          content: '';
+          position: absolute;
+          top: -60px; right: -60px;
+          width: 300px; height: 300px;
+          background: rgba(196,160,0,0.12);
+          border-radius: 50%;
+        }
+        .hero::after {
+          content: '';
+          position: absolute;
+          bottom: -80px; left: 30%;
+          width: 200px; height: 200px;
+          background: rgba(255,255,255,0.04);
+          border-radius: 50%;
+        }
+        .hero-eyebrow {
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+          color: #c4a000;
+          margin-bottom: 10px;
+        }
+        .hero h1 {
+          font-family: 'Playfair Display', serif;
+          font-size: 42px;
+          font-weight: 700;
+          color: #fff;
+          line-height: 1.1;
+          margin-bottom: 8px;
+        }
+        .hero-sub {
+          color: rgba(255,255,255,0.6);
+          font-size: 15px;
+          font-weight: 300;
+        }
 
         .compare-container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 32px 40px; max-width: 1100px; margin: 0 auto; }
 
@@ -113,9 +158,31 @@ export default function Compare() {
       `}</style>
 
       <div className="hero">
-        <div className="hero-eyebrow">Duke University</div>
-        <h1>Compare Courses</h1>
-        <p className="hero-sub">Evaluate the pros and cons between two courses</p>
+        <div className="hero-inner">
+          <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+            <button onClick={() => navigate('/')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>← Home</button>
+            <button onClick={() => navigate('/search')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>Search Courses</button>
+            <button onClick={() => navigate('/profile')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>My Profile</button>
+          </div>
+          <div className="hero-eyebrow">Duke University</div>
+          <h1>Compare Courses</h1>
+          <p className="hero-sub">Evaluate the pros and cons between two courses</p>
+        </div>
       </div>
 
       {/* Show collapsed summary or full search panels */}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const API = 'http://127.0.0.1:5001'
 
@@ -31,6 +32,7 @@ export default function App() {
   const [moi, setMoi] = useState([])
   const [aokOptions, setAokOptions] = useState([])
   const [moiOptions, setMoiOptions] = useState([])
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetch(`${API}/api/subjects`).then(r => r.json()).then(setSubjects)
@@ -251,6 +253,28 @@ export default function App() {
 
       <div className="hero">
         <div className="hero-inner">
+
+          <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+            <button onClick={() => navigate('/')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>← Home</button>
+            <button onClick={() => navigate('/compare')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>Compare Courses </button>
+            <button onClick={() => navigate('/profile')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>My Profile</button>
+          </div>          
+
           <div className="hero-eyebrow">Duke University</div>
           <h1>Course Scheduler</h1>
           <p className="hero-sub">Browse and filter Duke courses by subject, level, or keyword</p>
