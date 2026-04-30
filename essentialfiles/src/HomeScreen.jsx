@@ -51,7 +51,7 @@ export default function HomeScreen() {
           max-width: 1100px; margin: 0 auto;
           padding: 48px 40px;
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
+          grid-template-columns: 1fr 1fr 1fr 1fr;
           gap: 24px;
         }
         .nav-card {
@@ -107,7 +107,7 @@ export default function HomeScreen() {
         </div>        
         <div className="nav-card" onClick={() => navigate('/search')}>
           <div className="card-icon">🔍</div>
-          <h2>Search Courses</h2>
+          <h2>Course Search</h2>
           <p>Filter Duke's full course catalog by subject, level, area of knowledge, mode of inquiry, or keyword.</p>
           <div className="card-arrow">Browse courses →</div>
         </div>
@@ -116,6 +116,18 @@ export default function HomeScreen() {
           <h2>Compare Courses</h2>
           <p>Select any two courses and get an AI-powered breakdown of similarities, differences, and career outcomes.</p>
           <div className="card-arrow">Start comparing →</div>
+        </div>
+        <div className="nav-card" onClick={() => navigate('/scheduler')}>
+          <div className="card-icon">🗓️</div>
+          <h2>Smart Scheduler</h2>
+          <p>Add your registered courses and let BluePrint recommend what to take next based on your schedule and requirements.</p>
+          <div className="card-arrow">Plan my schedule →</div>
+        </div>
+        <div className="nav-card" onClick={() => navigate('/bluebot')}>
+          <div className="card-icon">🔵</div>
+          <h2>Bluebot</h2>
+          <p>Ask our AI academic advisor anything about Duke courses, requirements, and degree planning.</p>
+          <div className="card-arrow">Chat now →</div>
         </div>
       </div>
     </>

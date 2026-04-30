@@ -223,5 +223,160 @@ def completed_courses(student_id):
         conn.close()
         return jsonify({'success': True})
 
+@app.route('/api/student/<int:student_id>/planned-offerings', methods=['GET', 'POST', 'DELETE'])
+def planned_offerings(student_id):
+    conn = get_db()
+    cur = conn.cursor()
+
+    if request.method == 'GET':
+        cur.execute("""
+            SELECT o.offering_id, c.course_id, c.cname, c.numbering, c.subject,
+                   o.instructor, o.phys_location, o.seats_available,
+                   array_agg(m.day_of_week) as days,
+                   min(m.start_time) as start_time,
+                   max(m.end_time) as end_time
+            FROM Planned_Course pc
+            JOIN Offering o ON pc.course_id = o.course_id
+            JOIN Course c ON o.course_id = c.course_id
+            LEFT JOIN Meeting m ON o.offering_id = m.offering_id
+            WHERE pc.student_id = %s AND o.semester = 'Spring 2026'
+            GROUP BY o.offering_id, c.course_id, c.cname, c.numbering, c.subject,
+                     o.instructor, o.phys_location, o.seats_available
+        """, (student_id,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify([{
+            'offering_id': r[0], 'course_id': r[1], 'name': r[2],
+            'number': r[3], 'subject': r[4], 'instructor': r[5],
+            'location': r[6], 'seats': r[7], 'days': r[8] or [],
+            'start_time': r[9], 'end_time': r[10]
+        } for r in rows])
+
+    elif request.method == 'POST':
+        course_id = request.json.get('course_id')
+        cur.execute("""
+            INSERT INTO Planned_Course (student_id, course_id)
+            VALUES (%s, %s) ON CONFLICT DO NOTHING
+        """, (student_id, course_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'success': True})
+
+    elif request.method == 'DELETE':
+        course_id = request.json.get('course_id')
+        cur.execute("DELETE FROM Planned_Course WHERE student_id=%s AND course_id=%s",
+                    (student_id, course_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'success': True})
+
+
+@app.route('/api/recommendations', methods=['GET'])
+def get_recommendations():
+    student_id = request.args.get('student_id', type=int)
+    earliest_time = request.args.get('earliest_time', '00:00')  # e.g. "11:30"
+    avoid_days = request.args.getlist('avoid_days')             # e.g. ["Friday"]
+    aok = request.args.get('aok', '')
+    moi = request.args.get('moi', '')
+    subject = request.args.get('subject', '')
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Get student's already planned meeting times for conflict detection
+    cur.execute("""
+        SELECT m.day_of_week, m.start_time, m.end_time
+        FROM Planned_Course pc
+        JOIN Offering o ON pc.course_id = o.course_id
+        JOIN Meeting m ON o.offering_id = m.offering_id
+        WHERE pc.student_id = %s AND o.semester = 'Spring 2026'
+    """, (student_id,))
+    planned_meetings = cur.fetchall()
+
+    # Get completed course IDs to exclude
+    cur.execute("SELECT course_id FROM Completed_Course WHERE student_id = %s", (student_id,))
+    completed_ids = [r[0] for r in cur.fetchall()]
+
+    # Get planned course IDs to exclude
+    cur.execute("SELECT course_id FROM Planned_Course WHERE student_id = %s", (student_id,))
+    planned_ids = [r[0] for r in cur.fetchall()]
+
+    exclude_ids = completed_ids + planned_ids
+
+    query = """
+        SELECT DISTINCT c.course_id, c.cname, c.numbering, c.subject,
+               o.offering_id, o.instructor, o.phys_location,
+               array_agg(DISTINCT m.day_of_week) as days,
+               min(m.start_time) as start_time,
+               max(m.end_time) as end_time
+        FROM Course c
+        JOIN Offering o ON c.course_id = o.course_id
+        JOIN Meeting m ON o.offering_id = m.offering_id
+        LEFT JOIN Areas_Of_Knowledge ak ON c.course_id = ak.course_id
+        LEFT JOIN Modes_Of_Inquiry mi ON c.course_id = mi.course_id
+        WHERE o.semester = 'Spring 2026'
+        AND m.start_time >= %s
+    """
+    params = [earliest_time]
+
+    if exclude_ids:
+        query += " AND c.course_id != ALL(%s)"
+        params.append(exclude_ids)
+
+    if avoid_days:
+        query += " AND m.day_of_week != ALL(%s)"
+        params.append(avoid_days)
+
+    if aok:
+        query += " AND ak.area = %s"
+        params.append(aok)
+
+    if moi:
+        query += " AND mi.mode = %s"
+        params.append(moi)
+
+    if subject:
+        query += " AND c.subject = %s"
+        params.append(subject)
+
+    query += """
+        GROUP BY c.course_id, c.cname, c.numbering, c.subject,
+                 o.offering_id, o.instructor, o.phys_location
+        ORDER BY min(m.start_time)
+        LIMIT 20
+    """
+
+    cur.execute(query, params)
+    rows = cur.fetchall()
+
+    # Filter out time conflicts with planned courses
+    def conflicts(new_days, new_start, new_end, planned):
+        for p_day, p_start, p_end in planned:
+            if p_day in (new_days or []):
+                if new_start and new_end and p_start and p_end:
+                    if new_start < p_end and new_end > p_start:
+                        return True
+        return False
+
+    results = []
+    for r in rows:
+        days = [d for d in (r[7] or []) if d]
+        start = r[8]
+        end = r[9]
+        if not conflicts(days, start, end, planned_meetings):
+            results.append({
+                'course_id': r[0], 'name': r[1], 'number': r[2],
+                'subject': r[3], 'offering_id': r[4], 'instructor': r[5],
+                'location': r[6], 'days': days,
+                'start_time': start, 'end_time': end
+            })
+
+    cur.close()
+    conn.close()
+    return jsonify(results)
+
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

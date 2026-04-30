@@ -171,13 +171,25 @@ export default function Compare() {
               border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
               padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
               fontSize: 13, cursor: 'pointer'
-            }}>Search Courses</button>
+            }}>Course Search</button>
             <button onClick={() => navigate('/profile')} style={{
               background: 'transparent', color: 'rgba(255,255,255,0.7)',
               border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
               padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
               fontSize: 13, cursor: 'pointer'
             }}>My Profile</button>
+            <button onClick={() => navigate('/scheduler')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>Smart Scheduler</button>
+            <button onClick={() => navigate('/bluebot')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>Bluebot 🔵</button>
           </div>
           <div className="hero-eyebrow">Duke University</div>
           <h1>Compare Courses</h1>

@@ -273,10 +273,22 @@ export default function App() {
               padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
               fontSize: 13, cursor: 'pointer'
             }}>My Profile</button>
+            <button onClick={() => navigate('/scheduler')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>Smart Scheduler</button>
+            <button onClick={() => navigate('/bluebot')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>Bluebot 🔵</button>
           </div>          
 
           <div className="hero-eyebrow">Duke University</div>
-          <h1>Course Scheduler</h1>
+          <h1>Course Search</h1>
           <p className="hero-sub">Browse and filter Duke courses by subject, level, or keyword</p>
         </div>
       </div>

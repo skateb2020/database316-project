@@ -140,11 +140,16 @@ export default function Profile() {
 
       <div className="hero">
         <div className="hero-inner">
-          <div className="nav-btns">
-            <button className="nav-btn" onClick={() => navigate('/')}>← Home</button>
-            <button className="nav-btn" onClick={() => navigate('/search')}>Search Courses</button>
-            <button className="nav-btn" onClick={() => navigate('/compare')}>Compare Courses</button>
-          </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+              {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'], ['/scheduler', 'Smart Scheduler'], ['/bluebot', 'Bluebot 🔵']].map(([path, label]) => (
+                <button key={path} onClick={() => navigate(path)} style={{
+                  background: 'transparent', color: 'rgba(255,255,255,0.7)',
+                  border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+                  padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 13, cursor: 'pointer'
+                }}>{label}</button>
+              ))}
+            </div>
           <div className="hero-eyebrow">Duke University</div>
           <h1>{user ? `Welcome, ${user.name?.split(' ')[0]}` : 'My Profile'}</h1>
           <p className="hero-sub">{user ? `${yearLabel[user.year] || ''} · ${user.major || ''}` : 'Sign in to track your academic journey'}</p>

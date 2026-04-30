@@ -5,6 +5,8 @@ import HomeScreen from './HomeScreen.jsx'
 import SearchScreen from './App.jsx'
 import CompareScreen from './Compare.jsx'
 import ProfileScreen from './Profile.jsx'
+import SchedulerScreen from './Scheduler.jsx'
+import BluebotScreen from './Bluebot.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -14,6 +16,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/search" element={<SearchScreen />} />
         <Route path="/compare" element={<CompareScreen />} />
+        <Route path="/scheduler" element={<SchedulerScreen />} />
+        <Route path="/bluebot" element={<BluebotScreen />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
