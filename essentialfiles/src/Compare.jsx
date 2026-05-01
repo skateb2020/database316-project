@@ -196,6 +196,12 @@ export default function Compare() {
               padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
               fontSize: 13, cursor: 'pointer'
             }}>Bluebot 🔵</button>
+            <button onClick={() => navigate('/professors')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>Prof Ratings ⭐</button>
           </div>
           <div className="hero-eyebrow">Duke University</div>
           <h1>Compare Courses</h1>

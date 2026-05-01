@@ -8,6 +8,8 @@ import ProfileScreen from './Profile.jsx'
 import SchedulerScreen from './Scheduler.jsx'
 import BluebotScreen from './Bluebot.jsx'
 import ProgramsScreen from './Programs.jsx'
+import ProfessorsScreen from './Professors.jsx'
+import OptimizerScreen from './Optimizer.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -20,6 +22,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/scheduler" element={<SchedulerScreen />} />
         <Route path="/bluebot" element={<BluebotScreen />} />
         <Route path="/programs" element={<ProgramsScreen />} />
+        <Route path="/professors" element={<ProfessorsScreen />} />
+        <Route path="/optimizer" element={<OptimizerScreen />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

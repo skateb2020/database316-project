@@ -123,6 +123,12 @@ export default function HomeScreen() {
           <p>Add your registered courses and let BluePrint recommend what to take next based on your schedule and requirements.</p>
           <div className="card-arrow">Plan my schedule →</div>
         </div>
+        <div className="nav-card" onClick={() => navigate('/optimizer')}>
+          <div className="card-icon">🔀</div>
+          <h2>Course Optimizer</h2>
+          <p>Find courses that satisfy multiple degree requirements simultaneously — maximize every credit hour.</p>
+          <div className="card-arrow">Optimize my schedule →</div>
+        </div>
         <div className="nav-card" onClick={() => navigate('/bluebot')}>
           <div className="card-icon">🔵</div>
           <h2>Bluebot</h2>
@@ -134,6 +140,12 @@ export default function HomeScreen() {
           <h2>Programs</h2>
           <p>Search Duke's majors, minors, and certificates and view their requirements.</p>
           <div className="card-arrow">Explore programs →</div>
+        </div>
+        <div className="nav-card" onClick={() => navigate('/professors')}>
+          <div className="card-icon">⭐</div>
+          <h2>Professor Ratings</h2>
+          <p>Search Duke professors and view their RateMyProfessor ratings, difficulty scores, and student reviews.</p>
+          <div className="card-arrow">Find professors →</div>
         </div>
       </div>
     </>

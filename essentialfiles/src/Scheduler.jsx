@@ -37,6 +37,7 @@ export default function Scheduler() {
   const [moiOptions, setMoiOptions] = useState([])
   const [sections, setSections] = useState([])
   const [selectedCourse, setSelectedCourse] = useState(null)
+  const [rmpRatings, setRmpRatings] = useState({})
 
   // Preferences
   const [earliestTime, setEarliestTime] = useState('09:00')
@@ -60,8 +61,20 @@ export default function Scheduler() {
     const res = await fetch(`${API}/api/student/${user.student_id}/planned-offerings`)
     const data = await res.json()
     setPlannedCourses(data)
+    // Fetch RMP for all instructors
+    data.forEach(c => {
+      if (c.instructor && c.instructor !== 'TBA') fetchRmpRating(c.instructor)
+    })
   }
 
+  const fetchRmpRating = async (instructor) => {
+    if (!instructor || instructor === 'TBA' || rmpRatings[instructor]) return
+    const res = await fetch(`${API}/api/rmp?instructor=${encodeURIComponent(instructor)}`)
+    const data = await res.json()
+    if (data.rating) {
+      setRmpRatings(prev => ({ ...prev, [instructor]: data }))
+    }
+  }
   const searchCourses = async () => {
     if (!courseSearch) return
     const res = await fetch(`${API}/api/courses/search?search=${courseSearch}`)
@@ -75,6 +88,12 @@ export default function Scheduler() {
     setSections(data)
     setSelectedCourse({ course_id, name: course_name })
     setCourseResults([])
+    // Fetch RMP ratings for all instructors
+    data.forEach(s => {
+      if (s.instructor && s.instructor !== 'TBA') {
+        fetchRmpRating(s.instructor)
+      }
+    })
   }
 
   const addPlanned = async (offering_id) => {
@@ -180,7 +199,7 @@ export default function Scheduler() {
       <div className="hero">
         <div className="hero-inner">
           <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'], ['/profile', 'My Profile'],['/programs', 'Programs 🎓'], ['/bluebot', 'Bluebot 🔵']].map(([path, label]) => (
+            {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'], ['/profile', 'My Profile'],['/programs', 'Programs 🎓'], ['/bluebot', 'Bluebot 🔵'], ['/professors', 'Prof Ratings ⭐']].map(([path, label]) => (
               <button key={path} onClick={() => navigate(path)} style={{
                 background: 'transparent', color: 'rgba(255,255,255,0.7)',
                 border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
@@ -223,14 +242,22 @@ export default function Scheduler() {
                 <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a2e', marginBottom: 8 }}>
                   Pick a section for {selectedCourse.name}:
                 </div>
-                {sections.map(s => (
-                  <div key={s.offering_id} className="result-item" onClick={() => addPlanned(s.offering_id)}
-                    style={{ fontSize: 12 }}>
-                    <strong>{formatDays(s.days)}</strong> · {formatTime(s.start_time)} – {formatTime(s.end_time)}
-                    {s.instructor && s.instructor !== 'TBA' && ` · ${s.instructor}`}
-                    {s.location && ` · ${s.location}`}
-                  </div>
-                ))}
+            {sections.map(s => {
+              const rmp = s.instructor && s.instructor !== 'TBA' ? rmpRatings[s.instructor] : null
+              return (
+                <div key={s.offering_id} className="result-item" onClick={() => addPlanned(s.offering_id)}
+                  style={{ fontSize: 12 }}>
+                  <strong>{formatDays(s.days)}</strong> · {formatTime(s.start_time)} – {formatTime(s.end_time)}
+                  {s.instructor && s.instructor !== 'TBA' && ` · ${s.instructor}`}
+                  {s.location && ` · ${s.location}`}
+                  {rmp && (
+                    <span style={{ marginLeft: 8, color: rmp.rating >= 4 ? '#2e7d32' : rmp.rating >= 3 ? '#c4a000' : '#c0392b', fontWeight: 600 }}>
+                      ⭐ {rmp.rating} ({rmp.numRatings} ratings) · {rmp.wouldTakeAgain}% would take again
+                    </span>
+                  )}
+                </div>
+              )
+            })}
                 <div style={{ fontSize: 12, color: '#aaa', marginTop: 6, cursor: 'pointer' }}
                   onClick={() => { setSections([]); setSelectedCourse(null) }}>
                   ← Back to search
@@ -245,11 +272,17 @@ export default function Scheduler() {
                     <span className="subject-badge">{c.subject}</span>
                     <span style={{ fontSize: 12, color: '#bbb' }}>{c.number}</span>
                   </div>
-                  <div className="rec-name">{c.name}</div>
+
                   <div className="rec-meta">
                     <span>🕐 {formatTime(c.start_time)} – {formatTime(c.end_time)}</span>
                     <span>📅 {formatDays(c.days)}</span>
                     {c.location && <span>📍 {c.location}</span>}
+                    {c.instructor && c.instructor !== 'TBA' && <span>👤 {c.instructor}</span>}
+                    {rmpRatings[c.instructor] && (
+                      <span style={{ color: rmpRatings[c.instructor].rating >= 4 ? '#2e7d32' : rmpRatings[c.instructor].rating >= 3 ? '#c4a000' : '#c0392b', fontWeight: 600 }}>
+                        ⭐ {rmpRatings[c.instructor].rating} · {rmpRatings[c.instructor].wouldTakeAgain}% would take again
+                      </span>
+                    )}
                     <button onClick={() => removePlanned(c.offering_id)} style={{
                       background: 'none', border: 'none', color: '#c0392b',
                       cursor: 'pointer', fontSize: 12, marginLeft: 'auto'

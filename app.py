@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import requests
 from flask_cors import CORS
 import psycopg2
 import bcrypt
@@ -78,6 +79,45 @@ def get_subjects():
     conn.close()
     return jsonify([r[0] for r in rows])
 
+@app.route('/api/rmp/search')
+def search_rmp():
+    name = request.args.get('name', '')
+    print(f"RMP search for: {name}", flush=True)
+    
+    query = """
+    { newSearch { teachers(query: {text: "%s", schoolID: "U2Nob29sLTEzNTA="}) { 
+        edges { node { firstName lastName avgRating avgDifficulty numRatings wouldTakeAgainPercent department } } 
+    } } }
+    """ % name.replace('"', '')
+    try:
+        res = requests.post(
+            "https://www.ratemyprofessors.com/graphql",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "Basic dGVzdDp0ZXN0",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Origin": "https://www.ratemyprofessors.com",
+                "Referer": "https://www.ratemyprofessors.com/"
+            },
+            json={"query": query},
+            timeout=5
+        )
+        print(f"Status: {res.status_code}, Length: {len(res.text)}", flush=True)
+        data = res.json()
+        edges = data.get("data", {}).get("newSearch", {}).get("teachers", {}).get("edges", [])
+        return jsonify([{
+            'name': f"{e['node']['firstName']} {e['node']['lastName']}",
+            'rating': e['node']['avgRating'],
+            'difficulty': e['node']['avgDifficulty'],
+            'numRatings': e['node']['numRatings'],
+            'wouldTakeAgain': round(e['node']['wouldTakeAgainPercent']),
+            'department': e['node']['department']
+        } for e in edges[:6]])
+    except Exception as e:
+            print(f"RMP error: {e}", flush=True)
+            return jsonify([])
+
+
 @app.route("/api/aok", methods=["GET"])
 def get_aok():
     conn = get_db()
@@ -87,6 +127,63 @@ def get_aok():
     cur.close()
     conn.close()
     return jsonify([r[0] for r in rows])
+
+@app.route('/api/optimize', methods=['GET'])
+def optimize_courses():
+    aok = request.args.getlist('aok')
+    moi = request.args.getlist('moi')
+    aok_new = request.args.getlist('aok_new')
+    subject = request.args.get('subject', '')
+    
+    conn = get_db()
+    cur = conn.cursor()
+    
+    query = """
+        SELECT DISTINCT c.course_id, c.cname, c.numbering, c.subject,
+               array_agg(DISTINCT ak.area) as aok_areas,
+               array_agg(DISTINCT mi.mode) as moi_modes,
+               array_agg(DISTINCT an.area) as aok_new_areas
+        FROM Course c
+        LEFT JOIN Areas_Of_Knowledge ak ON c.course_id = ak.course_id
+        LEFT JOIN Modes_Of_Inquiry mi ON c.course_id = mi.course_id
+        LEFT JOIN Areas_Of_Knowledge_New an ON c.course_id = an.course_id
+        WHERE 1=1
+    """
+    params = []
+
+    for a in aok:
+        query += " AND c.course_id IN (SELECT course_id FROM Areas_Of_Knowledge WHERE area = %s)"
+        params.append(a)
+    for m in moi:
+        query += " AND c.course_id IN (SELECT course_id FROM Modes_Of_Inquiry WHERE mode = %s)"
+        params.append(m)
+    for a in aok_new:
+        query += " AND c.course_id IN (SELECT course_id FROM Areas_Of_Knowledge_New WHERE area = %s)"
+        params.append(a)
+    if subject:
+        query += " AND c.subject = %s"
+        params.append(subject)
+
+    query += """
+        GROUP BY c.course_id, c.cname, c.numbering, c.subject
+        ORDER BY c.subject, c.numbering
+        LIMIT 100
+    """
+
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return jsonify([{
+        'course_id': r[0],
+        'name': r[1],
+        'number': r[2],
+        'subject': r[3],
+        'aok': [a for a in (r[4] or []) if a],
+        'moi': [m for m in (r[5] or []) if m],
+        'aok_new': [a for a in (r[6] or []) if a]
+    } for r in rows])
 
 @app.route("/api/moi", methods=["GET"])
 def get_moi():
@@ -296,6 +393,43 @@ def completed_courses(student_id):
         cur.close()
         conn.close()
         return jsonify({'success': True})
+    
+@app.route('/api/rmp')
+def get_rmp_rating():
+    instructor = request.args.get('instructor', '')
+    if not instructor or instructor == 'TBA':
+        return jsonify({'rating': None})
+    
+    query = """
+    { newSearch { teachers(query: {text: "%s", schoolID: "U2Nob29sLTEzNTA="}) { 
+        edges { node { firstName lastName avgRating avgDifficulty numRatings wouldTakeAgainPercent } } 
+    } } }
+    """ % instructor.replace('"', '')
+    
+    try:
+        res = requests.post(
+            "https://www.ratemyprofessors.com/graphql",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "Basic dGVzdDp0ZXN0"
+            },
+            json={"query": query},
+            timeout=5
+        )
+        data = res.json()
+        edges = data.get("data", {}).get("newSearch", {}).get("teachers", {}).get("edges", [])
+        if not edges:
+            return jsonify({'rating': None})
+        teacher = edges[0]["node"]
+        return jsonify({
+            'name': f"{teacher['firstName']} {teacher['lastName']}",
+            'rating': teacher['avgRating'],
+            'difficulty': teacher['avgDifficulty'],
+            'numRatings': teacher['numRatings'],
+            'wouldTakeAgain': round(teacher['wouldTakeAgainPercent'])
+        })
+    except:
+        return jsonify({'rating': None})
 
 @app.route('/api/student/<int:student_id>/planned-offerings', methods=['GET', 'POST', 'DELETE'])
 def planned_offerings(student_id):
