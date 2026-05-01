@@ -2,6 +2,13 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import psycopg2
 import bcrypt
+import os
+import sendgrid
+from sendgrid.helpers.mail import Mail
+import random
+import string
+from dotenv import load_dotenv
+load_dotenv("/Users/uzair_chaudhry/cs316-project/.env")
 
 app = Flask(__name__)
 CORS(app)
@@ -123,29 +130,84 @@ def register():
     net_id = data.get('net_id')
     password = data.get('password')
     name = data.get('name')
-    year = data.get('year')
-    major = data.get('major')
-    minor = data.get('minor')
+    year = data.get('year') or None
+    major = data.get('major') or None
+    minor = data.get('minor') or None
 
     if not net_id or not password:
         return jsonify({'error': 'net_id and password required'}), 400
 
     password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    code = ''.join(random.choices(string.digits, k=6))
 
     try:
         conn = get_db()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO Student (net_id, name, year, major, minor, password_hash)
-            VALUES (%s, %s, %s, %s, %s, %s) RETURNING student_id
-        """, (net_id, name, year, major, minor, password_hash))
+            INSERT INTO Student (net_id, name, year, major, minor, password_hash, verification_code, is_verified)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, FALSE) RETURNING student_id
+        """, (net_id, name, year, major, minor, password_hash, code))
         student_id = cur.fetchone()[0]
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({'student_id': student_id, 'net_id': net_id, 'name': name})
     except Exception as e:
+        print(f"DB ERROR: {e}")
         return jsonify({'error': 'net_id already exists'}), 409
+
+    # Send email separately after DB success
+    try:
+        sg = sendgrid.SendGridAPIClient(api_key=os.getenv('SENDGRID_API_KEY'))
+        message = Mail(
+            from_email=os.getenv('SENDGRID_FROM_EMAIL'),
+            to_emails=f"{net_id}@duke.edu",
+            subject='BluePrint — Verify your account',
+            html_content=f"""
+                <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 40px;">
+                    <h2 style="color: #00247d;">Welcome to BluePrint</h2>
+                    <p>Your verification code is:</p>
+                    <h1 style="letter-spacing: 8px; color: #00247d;">{code}</h1>
+                    <p>Enter this code to activate your account.</p>
+                </div>
+            """
+        )
+        sg.send(message)
+    except Exception as e:
+        print(f"EMAIL ERROR: {e}")
+        # Don't fail registration if email fails — just log it
+
+    return jsonify({'student_id': student_id, 'net_id': net_id, 'name': name, 'needs_verification': True})
+    
+@app.route('/api/verify', methods=['POST'])
+def verify():
+    data = request.json
+    net_id = data.get('net_id')
+    code = data.get('code')
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT verification_code FROM Student WHERE net_id = %s", (net_id,))
+    row = cur.fetchone()
+
+    if not row or row[0] != code:
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Invalid code'}), 400
+
+    cur.execute("UPDATE Student SET is_verified = TRUE WHERE net_id = %s", (net_id,))
+    conn.commit()
+
+    # Get full student data to return
+    cur.execute("SELECT student_id, net_id, name, year, major, minor FROM Student WHERE net_id = %s", (net_id,))
+    student = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        'student_id': student[0], 'net_id': student[1],
+        'name': student[2], 'year': student[3],
+        'major': student[4], 'minor': student[5]
+    })
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -155,8 +217,7 @@ def login():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT student_id, name, year, major, minor, password_hash FROM Student WHERE net_id = %s", (net_id,))
-    row = cur.fetchone()
+    cur.execute("SELECT student_id, name, year, major, minor, password_hash, is_verified FROM Student WHERE net_id = %s", (net_id,))
     cur.close()
     conn.close()
 
@@ -165,6 +226,9 @@ def login():
     
     if not bcrypt.checkpw(password.encode(), row[5].encode()):
         return jsonify({'error': 'Invalid credentials'}), 401
+    
+    if not row[6]:  # is_verified
+        return jsonify({'error': 'Please verify your email first', 'needs_verification': True, 'net_id': net_id}), 403
 
     return jsonify({
         'student_id': row[0],

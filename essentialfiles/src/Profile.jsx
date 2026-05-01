@@ -9,7 +9,7 @@ export default function Profile() {
     const saved = localStorage.getItem('blueprint_user')
     return saved ? JSON.parse(saved) : null
   })
-  const [mode, setMode] = useState('login') // 'login' or 'register'
+  const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ net_id: '', password: '', name: '', year: '', major: '', minor: '' })
   const [error, setError] = useState('')
   const [completedCourses, setCompletedCourses] = useState([])
@@ -17,6 +17,9 @@ export default function Profile() {
   const [courseResults, setCourseResults] = useState([])
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({})
+  const [pendingVerification, setPendingVerification] = useState(false)
+  const [verificationCode, setVerificationCode] = useState('')
+  const [pendingNetId, setPendingNetId] = useState('')
 
   useEffect(() => {
     if (user) fetchCompleted()
@@ -30,6 +33,10 @@ export default function Profile() {
 
   const handleAuth = async () => {
     setError('')
+    if (mode === 'register' && !form.year) {
+      setError('Please select your year')
+      return
+    }
     const endpoint = mode === 'login' ? '/api/login' : '/api/register'
     const res = await fetch(`${API}${endpoint}`, {
       method: 'POST',
@@ -37,9 +44,30 @@ export default function Profile() {
       body: JSON.stringify(form)
     })
     const data = await res.json()
+
+    if (data.needs_verification) {
+      setPendingNetId(data.net_id || form.net_id)
+      setPendingVerification(true)
+      return
+    }
+
     if (!res.ok) { setError(data.error); return }
     localStorage.setItem('blueprint_user', JSON.stringify(data))
     setUser(data)
+  }
+
+  const handleVerify = async () => {
+    setError('')
+    const res = await fetch(`${API}/api/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ net_id: pendingNetId, code: verificationCode })
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); return }
+    localStorage.setItem('blueprint_user', JSON.stringify(data))
+    setUser(data)
+    setPendingVerification(false)
   }
 
   const handleLogout = () => {
@@ -101,9 +129,6 @@ export default function Profile() {
         .hero-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: #c4a000; margin-bottom: 10px; }
         .hero h1 { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #fff; margin-bottom: 8px; }
         .hero-sub { color: rgba(255,255,255,0.6); font-size: 15px; font-weight: 300; }
-        .nav-btns { display: flex; gap: 8px; margin-bottom: 24px; }
-        .nav-btn { background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 6px 16px; font-family: 'DM Sans, sans-serif'; font-size: 13px; cursor: pointer; }
-        .nav-btn:hover { background: rgba(255,255,255,0.1); }
         .content { max-width: 1100px; margin: 0 auto; padding: 40px; }
         .auth-card { background: #fff; border: 1px solid #e8e4dc; border-radius: 12px; padding: 40px; max-width: 480px; margin: 0 auto; }
         .auth-title { font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 8px; color: #1a1a2e; }
@@ -136,20 +161,22 @@ export default function Profile() {
         .result-item { padding: 10px 12px; border: 1px solid #e8e4dc; border-radius: 6px; cursor: pointer; font-size: 13px; margin-bottom: 6px; transition: all 0.15s; }
         .result-item:hover { border-color: #00247d; background: #eef1fa; color: #00247d; }
         .profile-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .verify-code { letter-spacing: 8px; font-size: 24px; text-align: center; font-weight: 700; }
       `}</style>
 
       <div className="hero">
         <div className="hero-inner">
-            <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-              {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'], ['/scheduler', 'Smart Scheduler'], ['/programs', 'Programs 🎓'], ['/bluebot', 'Bluebot 🔵']].map(([path, label]) => (
-                <button key={path} onClick={() => navigate(path)} style={{
-                  background: 'transparent', color: 'rgba(255,255,255,0.7)',
-                  border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
-                  padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
-                  fontSize: 13, cursor: 'pointer'
-                }}>{label}</button>
-              ))}
-            </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+            {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'],
+              ['/scheduler', 'Smart Scheduler'], ['/programs', 'Programs 🎓'], ['/bluebot', 'Bluebot 🔵']].map(([path, label]) => (
+              <button key={path} onClick={() => navigate(path)} style={{
+                background: 'transparent', color: 'rgba(255,255,255,0.7)',
+                border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+                padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+                fontSize: 13, cursor: 'pointer'
+              }}>{label}</button>
+            ))}
+          </div>
           <div className="hero-eyebrow">Duke University</div>
           <h1>{user ? `Welcome, ${user.name?.split(' ')[0]}` : 'My Profile'}</h1>
           <p className="hero-sub">{user ? `${yearLabel[user.year] || ''} · ${user.major || ''}` : 'Sign in to track your academic journey'}</p>
@@ -158,57 +185,80 @@ export default function Profile() {
 
       <div className="content">
         {!user ? (
-          <div className="auth-card">
-            <div className="auth-title">{mode === 'login' ? 'Sign In' : 'Create Account'}</div>
-            <div className="auth-sub">{mode === 'login' ? 'Welcome back to BluePrint' : 'Start planning your Duke journey'}</div>
-            {error && <div className="error">{error}</div>}
-            {mode === 'register' && (
+          pendingVerification ? (
+            <div className="auth-card">
+              <div className="auth-title">Check your Duke email</div>
+              <div className="auth-sub">We sent a 6-digit code to <strong>{pendingNetId}@duke.edu</strong></div>
+              {error && <div className="error">{error}</div>}
               <div className="field">
-                <label>Full Name</label>
-                <input placeholder="e.g. Uzair Chaudhry" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                <label>Verification Code</label>
+                <input
+                  className="verify-code"
+                  placeholder="000000"
+                  value={verificationCode}
+                  onChange={e => setVerificationCode(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleVerify()}
+                  maxLength={6}
+                />
               </div>
-            )}
-            <div className="field">
-              <label>NetID</label>
-              <input placeholder="e.g. uc123" value={form.net_id} onChange={e => setForm({...form, net_id: e.target.value})} />
+              <button className="btn-primary" onClick={handleVerify}>Verify Account</button>
+              <div className="toggle">
+                Wrong email? <span onClick={() => { setPendingVerification(false); setError('') }}>Go back</span>
+              </div>
             </div>
-            <div className="field">
-              <label>Password</label>
-              <input type="password" placeholder="••••••••" value={form.password} onChange={e => setForm({...form, password: e.target.value})}
-                onKeyDown={e => e.key === 'Enter' && handleAuth()} />
+          ) : (
+            <div className="auth-card">
+              <div className="auth-title">{mode === 'login' ? 'Sign In' : 'Create Account'}</div>
+              <div className="auth-sub">{mode === 'login' ? 'Welcome back to BluePrint' : 'Start planning your Duke journey'}</div>
+              {error && <div className="error">{error}</div>}
+              {mode === 'register' && (
+                <div className="field">
+                  <label>Full Name</label>
+                  <input placeholder="e.g. Uzair Chaudhry" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                </div>
+              )}
+              <div className="field">
+                <label>NetID</label>
+                <input placeholder="e.g. uc123" value={form.net_id} onChange={e => setForm({...form, net_id: e.target.value})} />
+              </div>
+              <div className="field">
+                <label>Password</label>
+                <input type="password" placeholder="••••••••" value={form.password} onChange={e => setForm({...form, password: e.target.value})}
+                  onKeyDown={e => e.key === 'Enter' && handleAuth()} />
+              </div>
+              {mode === 'register' && (
+                <>
+                  <div className="field">
+                    <label>Year</label>
+                    <select value={form.year} onChange={e => setForm({...form, year: e.target.value})}>
+                      <option value="">Select year</option>
+                      <option value="1">First Year</option>
+                      <option value="2">Sophomore</option>
+                      <option value="3">Junior</option>
+                      <option value="4">Senior</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Major</label>
+                    <input placeholder="e.g. Computer Science" value={form.major} onChange={e => setForm({...form, major: e.target.value})} />
+                  </div>
+                  <div className="field">
+                    <label>Minor (optional)</label>
+                    <input placeholder="e.g. Mathematics" value={form.minor} onChange={e => setForm({...form, minor: e.target.value})} />
+                  </div>
+                </>
+              )}
+              <button className="btn-primary" onClick={handleAuth}>
+                {mode === 'login' ? 'Sign In' : 'Create Account'}
+              </button>
+              <div className="toggle">
+                {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+                <span onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}>
+                  {mode === 'login' ? 'Register' : 'Sign In'}
+                </span>
+              </div>
             </div>
-            {mode === 'register' && (
-              <>
-                <div className="field">
-                  <label>Year</label>
-                  <select value={form.year} onChange={e => setForm({...form, year: e.target.value})}>
-                    <option value="">Select year</option>
-                    <option value="1">First Year</option>
-                    <option value="2">Sophomore</option>
-                    <option value="3">Junior</option>
-                    <option value="4">Senior</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Major</label>
-                  <input placeholder="e.g. Computer Science" value={form.major} onChange={e => setForm({...form, major: e.target.value})} />
-                </div>
-                <div className="field">
-                  <label>Minor (optional)</label>
-                  <input placeholder="e.g. Mathematics" value={form.minor} onChange={e => setForm({...form, minor: e.target.value})} />
-                </div>
-              </>
-            )}
-            <button className="btn-primary" onClick={handleAuth}>
-              {mode === 'login' ? 'Sign In' : 'Create Account'}
-            </button>
-            <div className="toggle">
-              {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-              <span onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}>
-                {mode === 'login' ? 'Register' : 'Sign In'}
-              </span>
-            </div>
-          </div>
+          )
         ) : (
           <>
             <div className="profile-actions">
