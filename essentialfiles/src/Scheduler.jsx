@@ -13,6 +13,17 @@ const MOI_LABELS = {
 }
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
+const AOK_NEW_LABELS = {
+  'CE': 'Creating & Engaging with Art',
+  'HI': 'Humanistic Inquiry',
+  'IJ': 'Institutions, Justice & Power',
+  'NW': 'Investigating the Natural World',
+  'QC': 'Quantitative & Computational Reasoning',
+  'SB': 'Social & Behavioral Analysis',
+  'LG': 'Language',
+  'WR': 'Writing'
+}
+
 export default function Scheduler() {
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem('blueprint_user') || 'null')
@@ -24,12 +35,16 @@ export default function Scheduler() {
   const [loading, setLoading] = useState(false)
   const [aokOptions, setAokOptions] = useState([])
   const [moiOptions, setMoiOptions] = useState([])
+  const [sections, setSections] = useState([])
+  const [selectedCourse, setSelectedCourse] = useState(null)
 
   // Preferences
   const [earliestTime, setEarliestTime] = useState('09:00')
   const [avoidDays, setAvoidDays] = useState([])
   const [prefAok, setPrefAok] = useState('')
-  const [prefMoi, setPrefMoi] = useState('')
+  const [aokNewOptions, setAokNewOptions] = useState([])
+  const [prefAokNew, setPrefAokNew] = useState('')
+  const [prefMoi, setPrefMoi] = useState([])  
   const [prefSubject, setPrefSubject] = useState('')
   const [subjects, setSubjects] = useState([])
 
@@ -37,6 +52,7 @@ export default function Scheduler() {
     fetch(`${API}/api/aok`).then(r => r.json()).then(setAokOptions)
     fetch(`${API}/api/moi`).then(r => r.json()).then(setMoiOptions)
     fetch(`${API}/api/subjects`).then(r => r.json()).then(setSubjects)
+    fetch(`${API}/api/aok_new`).then(r => r.json()).then(setAokNewOptions)
     if (user) fetchPlanned()
   }, [])
 
@@ -48,27 +64,36 @@ export default function Scheduler() {
 
   const searchCourses = async () => {
     if (!courseSearch) return
-    const res = await fetch(`${API}/api/courses?search=${courseSearch}`)
+    const res = await fetch(`${API}/api/courses/search?search=${courseSearch}`)
     const data = await res.json()
     setCourseResults(data)
   }
 
-  const addPlanned = async (course_id) => {
+  const fetchSections = async (course_id, course_name) => {
+    const res = await fetch(`${API}/api/course-sections/${course_id}`)
+    const data = await res.json()
+    setSections(data)
+    setSelectedCourse({ course_id, name: course_name })
+    setCourseResults([])
+  }
+
+  const addPlanned = async (offering_id) => {
     await fetch(`${API}/api/student/${user.student_id}/planned-offerings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course_id })
+      body: JSON.stringify({ offering_id })
     })
     fetchPlanned()
-    setCourseResults([])
+    setSections([])
+    setSelectedCourse(null)
     setCourseSearch('')
   }
 
-  const removePlanned = async (course_id) => {
+  const removePlanned = async (offering_id) => {
     await fetch(`${API}/api/student/${user.student_id}/planned-offerings`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course_id })
+      body: JSON.stringify({ offering_id })
     })
     fetchPlanned()
   }
@@ -80,7 +105,8 @@ export default function Scheduler() {
     params.append('earliest_time', earliestTime)
     avoidDays.forEach(d => params.append('avoid_days', d))
     if (prefAok) params.append('aok', prefAok)
-    if (prefMoi) params.append('moi', prefMoi)
+    prefMoi.forEach(m => params.append('moi', m))
+    if (prefAokNew) params.append('aok_new', prefAokNew)
     if (prefSubject) params.append('subject', prefSubject)
     const res = await fetch(`${API}/api/recommendations?${params}`)
     const data = await res.json()
@@ -154,7 +180,7 @@ export default function Scheduler() {
       <div className="hero">
         <div className="hero-inner">
           <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'], ['/profile', 'My Profile'], ['/bluebot', 'Bluebot 🔵']].map(([path, label]) => (
+            {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'], ['/profile', 'My Profile'],['/programs', 'Programs 🎓'], ['/bluebot', 'Bluebot 🔵']].map(([path, label]) => (
               <button key={path} onClick={() => navigate(path)} style={{
                 background: 'transparent', color: 'rgba(255,255,255,0.7)',
                 border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
@@ -186,10 +212,29 @@ export default function Scheduler() {
             {courseResults.length > 0 && (
               <div style={{ marginBottom: 12, maxHeight: 180, overflowY: 'auto' }}>
                 {courseResults.slice(0, 8).map(c => (
-                  <div key={c.course_id} className="result-item" onClick={() => addPlanned(c.course_id)}>
+                  <div key={c.course_id} className="result-item" onClick={() => fetchSections(c.course_id, c.name)}>
                     <strong>{c.subject} {c.number}</strong> — {c.name}
                   </div>
                 ))}
+              </div>
+            )}
+            {sections.length > 0 && selectedCourse && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a2e', marginBottom: 8 }}>
+                  Pick a section for {selectedCourse.name}:
+                </div>
+                {sections.map(s => (
+                  <div key={s.offering_id} className="result-item" onClick={() => addPlanned(s.offering_id)}
+                    style={{ fontSize: 12 }}>
+                    <strong>{formatDays(s.days)}</strong> · {formatTime(s.start_time)} – {formatTime(s.end_time)}
+                    {s.instructor && s.instructor !== 'TBA' && ` · ${s.instructor}`}
+                    {s.location && ` · ${s.location}`}
+                  </div>
+                ))}
+                <div style={{ fontSize: 12, color: '#aaa', marginTop: 6, cursor: 'pointer' }}
+                  onClick={() => { setSections([]); setSelectedCourse(null) }}>
+                  ← Back to search
+                </div>
               </div>
             )}
             {plannedCourses.length === 0
@@ -205,7 +250,7 @@ export default function Scheduler() {
                     <span>🕐 {formatTime(c.start_time)} – {formatTime(c.end_time)}</span>
                     <span>📅 {formatDays(c.days)}</span>
                     {c.location && <span>📍 {c.location}</span>}
-                    <button onClick={() => removePlanned(c.course_id)} style={{
+                    <button onClick={() => removePlanned(c.offering_id)} style={{
                       background: 'none', border: 'none', color: '#c0392b',
                       cursor: 'pointer', fontSize: 12, marginLeft: 'auto'
                     }}>Remove</button>
@@ -237,14 +282,40 @@ export default function Scheduler() {
               <label>Must Satisfy AoK</label>
               <select value={prefAok} onChange={e => setPrefAok(e.target.value)}>
                 <option value="">Any</option>
-                {aokOptions.map(a => <option key={a} value={a}>{AOK_LABELS[a] || a}</option>)}
+                {aokOptions.map(a => <option key={a} value={a}>{AOK_NEW_LABELS[a] || a}</option>)}
               </select>
             </div>
             <div className="field">
-              <label>Must Satisfy MoI</label>
-              <select value={prefMoi} onChange={e => setPrefMoi(e.target.value)}>
+              <label>Must Satisfy MoI (up to 3)</label>
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: 6}}>
+                {moiOptions.map(m => (
+                  <label key={m} style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    background: prefMoi.includes(m) ? '#eef1fa' : '#fafaf8',
+                    border: `1.5px solid ${prefMoi.includes(m) ? '#00247d' : '#e0dbd0'}`,
+                    borderRadius: 6, padding: '5px 10px', cursor: 'pointer',
+                    fontSize: 13, color: prefMoi.includes(m) ? '#00247d' : '#1a1a2e',
+                    opacity: !prefMoi.includes(m) && prefMoi.length >= 3 ? 0.4 : 1
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={prefMoi.includes(m)}
+                      onChange={e => {
+                        if (e.target.checked && prefMoi.length < 3) setPrefMoi([...prefMoi, m])
+                        else if (!e.target.checked) setPrefMoi(prefMoi.filter(x => x !== m))
+                      }}
+                      style={{display: 'none'}}
+                    />
+                    {MOI_LABELS[m] || m}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="field">
+              <label>Must Satisfy Distribution (2025+)</label>
+              <select value={prefAokNew} onChange={e => setPrefAokNew(e.target.value)}>
                 <option value="">Any</option>
-                {moiOptions.map(m => <option key={m} value={m}>{MOI_LABELS[m] || m}</option>)}
+                {aokNewOptions.map(a => <option key={a} value={a}>{AOK_NEW_LABELS[a] || a}</option>)}
               </select>
             </div>
             <div className="field">

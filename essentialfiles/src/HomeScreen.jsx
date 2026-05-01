@@ -51,7 +51,7 @@ export default function HomeScreen() {
           max-width: 1100px; margin: 0 auto;
           padding: 48px 40px;
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr 1fr;
+          grid-template-columns: 1fr 1fr 1fr;
           gap: 24px;
         }
         .nav-card {
@@ -128,6 +128,12 @@ export default function HomeScreen() {
           <h2>Bluebot</h2>
           <p>Ask our AI academic advisor anything about Duke courses, requirements, and degree planning.</p>
           <div className="card-arrow">Chat now →</div>
+        </div>
+        <div className="nav-card" onClick={() => navigate('/programs')}>
+          <div className="card-icon">🎓</div>
+          <h2>Programs</h2>
+          <p>Search Duke's majors, minors, and certificates and view their requirements.</p>
+          <div className="card-arrow">Explore programs →</div>
         </div>
       </div>
     </>

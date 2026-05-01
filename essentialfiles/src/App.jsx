@@ -295,6 +295,12 @@ export default function App() {
               padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
               fontSize: 13, cursor: 'pointer'
             }}>Smart Scheduler</button>
+            <button onClick={() => navigate('/programs')} style={{
+              background: 'transparent', color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
+              padding: '6px 16px', fontFamily: 'DM Sans, sans-serif',
+              fontSize: 13, cursor: 'pointer'
+            }}>Programs 🎓</button>
             <button onClick={() => navigate('/bluebot')} style={{
               background: 'transparent', color: 'rgba(255,255,255,0.7)',
               border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,
