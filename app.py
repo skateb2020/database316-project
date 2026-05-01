@@ -34,12 +34,22 @@ def filter_courses():
     if aok:
         query += " AND c.course_id IN (SELECT course_id FROM Areas_Of_Knowledge WHERE area = %s)"
         sql_params.append(aok)
+
+    aok_new = request.args.getlist('aok_new')
+    if aok_new:
+        for a in aok_new:
+            query += " AND c.course_id IN (SELECT course_id FROM Areas_Of_Knowledge_New WHERE area = %s)"
+            sql_params.append(a)
+
     if moi:
         for m in moi:
             query += " AND c.course_id IN (SELECT course_id FROM Modes_Of_Inquiry WHERE mode = %s)"
             sql_params.append(m)
 
-    query += " ORDER BY c.subject, c.numbering LIMIT 50"
+    if subject or level or search or aok or moi:
+        query += " ORDER BY c.subject, c.numbering"
+    else:
+        query += " ORDER BY c.subject, c.numbering LIMIT 200"
 
     conn = get_db()
     cur = conn.cursor()
@@ -239,7 +249,7 @@ def planned_offerings(student_id):
             JOIN Offering o ON pc.course_id = o.course_id
             JOIN Course c ON o.course_id = c.course_id
             LEFT JOIN Meeting m ON o.offering_id = m.offering_id
-            WHERE pc.student_id = %s AND o.semester = 'Spring 2026'
+            WHERE pc.student_id = %s AND o.semester = 'Fall 2026'
             GROUP BY o.offering_id, c.course_id, c.cname, c.numbering, c.subject,
                      o.instructor, o.phys_location, o.seats_available
         """, (student_id,))
@@ -273,6 +283,15 @@ def planned_offerings(student_id):
         conn.close()
         return jsonify({'success': True})
 
+@app.route('/api/aok_new', methods=['GET'])
+def get_aok_new():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT area FROM Areas_Of_Knowledge_New ORDER BY area")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify([r[0] for r in rows])
 
 @app.route('/api/recommendations', methods=['GET'])
 def get_recommendations():
@@ -292,7 +311,7 @@ def get_recommendations():
         FROM Planned_Course pc
         JOIN Offering o ON pc.course_id = o.course_id
         JOIN Meeting m ON o.offering_id = m.offering_id
-        WHERE pc.student_id = %s AND o.semester = 'Spring 2026'
+        WHERE pc.student_id = %s AND o.semester = 'Fall 2026'
     """, (student_id,))
     planned_meetings = cur.fetchall()
 
@@ -317,7 +336,7 @@ def get_recommendations():
         JOIN Meeting m ON o.offering_id = m.offering_id
         LEFT JOIN Areas_Of_Knowledge ak ON c.course_id = ak.course_id
         LEFT JOIN Modes_Of_Inquiry mi ON c.course_id = mi.course_id
-        WHERE o.semester = 'Spring 2026'
+        WHERE o.semester = 'Fall 2026'
         AND m.start_time >= %s
     """
     params = [earliest_time]

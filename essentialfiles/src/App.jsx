@@ -20,6 +20,17 @@ const MOI_LABELS = {
   'W': 'Writing'
 }
 
+const AOK_NEW_LABELS = {
+  'CE': 'Creating & Engaging with Art',
+  'HI': 'Humanistic Inquiry',
+  'IJ': 'Institutions, Justice & Power',
+  'NW': 'Investigating the Natural World',
+  'QC': 'Quantitative & Computational Reasoning',
+  'SB': 'Social & Behavioral Analysis',
+  'LG': 'Language',
+  'WR': 'Writing'
+}
+
 export default function App() {
   const [subjects, setSubjects] = useState([])
   const [courses, setCourses] = useState([])
@@ -33,11 +44,15 @@ export default function App() {
   const [aokOptions, setAokOptions] = useState([])
   const [moiOptions, setMoiOptions] = useState([])
   const navigate = useNavigate()
+  const [curriculum, setCurriculum] = useState('classic')
+  const [aokNewOptions, setAokNewOptions] = useState([])
+  const [aokNewSelected, setAokNewSelected] = useState([])
 
   useEffect(() => {
     fetch(`${API}/api/subjects`).then(r => r.json()).then(setSubjects)
     fetch(`${API}/api/aok`).then(r => r.json()).then(setAokOptions)
     fetch(`${API}/api/moi`).then(r => r.json()).then(setMoiOptions)
+    fetch(`${API}/api/aok_new`).then(r => r.json()).then(setAokNewOptions)
   }, [])
     
 
@@ -49,6 +64,7 @@ export default function App() {
     if (level) params.append('level', level)
     if (search) params.append('search', search)
     if (aok) params.append('aok', aok)
+    aokNewSelected.forEach(a => params.append('aok_new', a))
     moi.forEach(m => params.append('moi', m))
     fetch(`${API}/api/courses?${params}`)
       .then(r => r.json())
@@ -296,6 +312,13 @@ export default function App() {
       <div className="filter-bar">
         <div className="filter-bar-inner">
           <div className="filter-group">
+            <span className="filter-label">Curriculum</span>
+            <select value={curriculum} onChange={e => { setCurriculum(e.target.value); setAok(''); setAokNewSelected([]); setMoi([]) }}>
+              <option value="classic">Classic (Pre-2025)</option>
+              <option value="new">New (2025+)</option>
+            </select>
+          </div>
+          <div className="filter-group">
             <span className="filter-label">Subject</span>
             <select value={subject} onChange={e => setSubject(e.target.value)}>
               <option value="">All Subjects</option>
@@ -314,39 +337,52 @@ export default function App() {
             </select>
           </div>
 
-          <div className="filter-group">
-            <span className="filter-label">Area of Knowledge</span>
-            <select value={aok} onChange={e => setAok(e.target.value)}>
-              <option value="">All Areas</option>
-              {aokOptions.map(a => <option key={a} value={a}>{AOK_LABELS[a] || a}</option>)}
-            </select>
-          </div>
+          {curriculum === 'classic' && (
+            <>
+              <div className="filter-group">
+                <span className="filter-label">Area of Knowledge</span>
+                <select value={aok} onChange={e => setAok(e.target.value)}>
+                  <option value="">All Areas</option>
+                  {aokOptions.map(a => <option key={a} value={a}>{AOK_LABELS[a] || a}</option>)}
+                </select>
+              </div>
+              <div className="filter-group">
+                <span className="filter-label">Mode of Inquiry</span>
+                <div style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%'}}>
+                  {moiOptions.map(m => (
+                    <label key={m} style={{
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      background: moi.includes(m) ? '#eef1fa' : '#fafaf8',
+                      border: `1.5px solid ${moi.includes(m) ? '#00247d' : '#e0dbd0'}`,
+                      borderRadius: 6, padding: '5px 10px', cursor: 'pointer',
+                      fontSize: 13, color: moi.includes(m) ? '#00247d' : '#1a1a2e'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={moi.includes(m)}
+                        onChange={e => {
+                          if (e.target.checked && moi.length < 3) setMoi([...moi, m])
+                          else if (!e.target.checked) setMoi(moi.filter(x => x !== m))
+                        }}
+                        style={{display: 'none'}}
+                      />
+                      {MOI_LABELS[m] || m}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
-          <div className="filter-group">
-            <span className="filter-label">Mode of Inquiry</span>
-            <div style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%'}}>
-              {moiOptions.map(m => (
-                <label key={m} style={{
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  background: moi.includes(m) ? '#eef1fa' : '#fafaf8',
-                  border: `1.5px solid ${moi.includes(m) ? '#00247d' : '#e0dbd0'}`,
-                  borderRadius: 6, padding: '5px 10px', cursor: 'pointer',
-                  fontSize: 13, color: moi.includes(m) ? '#00247d' : '#1a1a2e'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={moi.includes(m)}
-                    onChange={e => {
-                      if (e.target.checked) setMoi([...moi, m])
-                      else setMoi(moi.filter(x => x !== m))
-                    }}
-                    style={{display: 'none'}}
-                  />
-                  {MOI_LABELS[m] || m}
-                </label>
-              ))}
+          {curriculum === 'new' && (
+            <div className="filter-group">
+              <span className="filter-label">Distribution Category</span>
+              <select value={aokNewSelected[0] || ''} onChange={e => setAokNewSelected(e.target.value ? [e.target.value] : [])}>
+                <option value="">All Categories</option>
+                {aokNewOptions.map(a => <option key={a} value={a}>{AOK_NEW_LABELS[a] || a}</option>)}
+              </select>
             </div>
-          </div>
+          )}
 
           <div className="filter-group">
             <span className="filter-label">Keyword</span>

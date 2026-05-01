@@ -12,7 +12,7 @@ API_KEY = os.getenv("DUKE_API_KEY")
 print(f"Using API key: {API_KEY[:8]}...", flush=True)
 
 BASE = "https://streamer.oit.duke.edu/curriculum"
-STRM = "1950"
+STRM = "1980"
 
 conn = psycopg2.connect(dbname="duke_courses", user="uzair_chaudhry", host="localhost")
 cur = conn.cursor()
@@ -64,7 +64,7 @@ for cid in course_ids:
             cur.execute("""
                 INSERT INTO Offering (course_id, semester, phys_location, instructor, seats_available)
                 VALUES (%s, %s, %s, %s, %s) RETURNING offering_id
-            """, (cid, "Spring 2026", "", instructor, seats))
+            """, (cid, "Fall 2026", "", instructor, seats))
             offering_id = cur.fetchone()[0]
 
             patterns = cls.get("classes_meeting_patterns", {}).get("class_meeting_pattern", [])
