@@ -65,8 +65,8 @@ export default function Programs() {
       <div className="hero">
         <div className="hero-inner">
           <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'],
-              ['/scheduler', 'Smart Scheduler'], ['/profile', 'My Profile'], ['/bluebot', 'Bluebot 🔵'], ['/professors', 'Prof Ratings ⭐']].map(([path, label]) => (
+            {[['/', '← Home'], ['/search', 'Course Search 🔍'], ['/compare', 'Compare Courses ⚖️'],
+              ['/scheduler', 'Smart Scheduler 🗓️'], ['/profile', 'My Profile 👤'], ['/optimizer', 'Optimizer 🔀'], ['/bluebot', 'Bluebot 🔵'], ['/professors', 'Prof Ratings ⭐']].map(([path, label]) => (
               <button key={path} onClick={() => navigate(path)} style={{
                 background: 'transparent', color: 'rgba(255,255,255,0.7)',
                 border: '1px solid rgba(255,255,255,0.25)', borderRadius: 6,

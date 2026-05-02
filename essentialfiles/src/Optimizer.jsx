@@ -106,8 +106,8 @@ export default function Optimizer() {
       <div className="hero">
         <div className="hero-inner">
           <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            {[['/', '← Home'], ['/search', 'Course Search'], ['/compare', 'Compare Courses'],
-              ['/scheduler', 'Smart Scheduler'], ['/programs', 'Programs 🎓'],
+            {[['/', '← Home'], ['/search', 'Course Search 🔍'], ['/compare', 'Compare Courses ⚖️'],
+              ['/scheduler', 'Smart Scheduler 🗓️'], ['/profile', 'My Profile 👤'], ['/programs', 'Programs 🎓'],
               ['/professors', 'Prof Ratings ⭐'], ['/bluebot', 'Bluebot 🔵']].map(([path, label]) => (
               <button key={path} onClick={() => navigate(path)} style={{
                 background: 'transparent', color: 'rgba(255,255,255,0.7)',
