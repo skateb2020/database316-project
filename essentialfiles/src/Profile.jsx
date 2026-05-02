@@ -78,7 +78,7 @@ export default function Profile() {
 
   const searchCourses = async () => {
     if (!courseSearch) return
-    const res = await fetch(`${API}/api/courses?search=${courseSearch}`)
+    const res = await fetch(`${API}/api/courses/search?search=${courseSearch}`)
     const data = await res.json()
     setCourseResults(data)
   }
